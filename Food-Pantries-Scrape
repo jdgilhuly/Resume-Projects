@@ -1,0 +1,45 @@
+#packages -- beautiful soup for the text/ selenium to navigate the page
+from bs4 import BeautifulSoup as soup
+from urllib.request import urlopen as uReq
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+driver= webdriver.Chrome(ChromeDriverManager().install())
+
+#Getting Links of the main foodpantries page
+def getLinksOfMainPage(a):
+    # getting urls and reading it
+    my_url = a
+    driver.get(my_url)
+    uClient = uReq(my_url)
+    page_html = uClient.read()
+    uClient.close()
+    page_soup = soup(page_html, "html.parser")
+    
+    #get links
+    link_hold = []
+    for link in page_soup.find_all('a'):
+        link_hold.append(link.get('href'))
+    
+    #remove duplicates
+    i = 1
+    while i < len(link_hold):
+        if link_hold[i] == link_hold[i-1]:
+            del link_hold[i-1]
+            i += 1
+        else:
+            i += 1
+            
+    return link_hold
+
+def Individual_Links_to_States():
+    all_region_links = []
+    z = getLinksOfMainPage("https://www.foodpantries.org/")
+    all_links = z[19:70]
+    for link in all_links:
+        driver.get(link)
+        all_region_links.append(getLinksOfMainPage(link))
+        time.sleep(2)
+    return all_region_links
+
+States_Links = Individual_Links_to_States()
