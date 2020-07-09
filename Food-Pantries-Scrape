@@ -2,24 +2,24 @@
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen as uReq
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-import time
+from webdriver_manager.chrome import ChromeDriverManager #the automation bot that gets the websites
+import time 
 driver= webdriver.Chrome(ChromeDriverManager().install())
 
 #Getting Links of the main foodpantries page
 def getLinksOfMainPage(a):
     # getting urls and reading it
     my_url = a
-    driver.get(my_url)
+    driver.get(my_url) 
     uClient = uReq(my_url)
     page_html = uClient.read()
     uClient.close()
-    page_soup = soup(page_html, "html.parser")
+    page_soup = soup(page_html, "html.parser") #the page text
     
     #get links
     link_hold = []
     for link in page_soup.find_all('a'):
-        link_hold.append(link.get('href'))
+        link_hold.append(link.get('href')) #find all links in the page and puts them in an array
     
     #remove duplicates
     i = 1
@@ -35,11 +35,11 @@ def getLinksOfMainPage(a):
 def Individual_Links_to_States():
     all_region_links = []
     z = getLinksOfMainPage("https://www.foodpantries.org/")
-    all_links = z[19:70]
+    all_links = z[19:70] #this deletes all links in the foodpantries page that was not a link to the individual states
     for link in all_links:
         driver.get(link)
         all_region_links.append(getLinksOfMainPage(link))
-        time.sleep(2)
+        time.sleep(2) #sometimes the driver that gets the urls goes to quickly for the webscrape to happen
     return all_region_links
 
 States_Links = Individual_Links_to_States()
