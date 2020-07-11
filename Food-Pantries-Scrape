@@ -2,24 +2,24 @@
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen as uReq
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager #the automation bot that gets the websites
-import time 
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 driver= webdriver.Chrome(ChromeDriverManager().install())
 
 #Getting Links of the main foodpantries page
 def getLinksOfMainPage(a):
     # getting urls and reading it
     my_url = a
-    driver.get(my_url) 
+    driver.get(my_url)
     uClient = uReq(my_url)
     page_html = uClient.read()
     uClient.close()
-    page_soup = soup(page_html, "html.parser") #the page text
+    page_soup = soup(page_html, "html.parser")
     
     #get links
     link_hold = []
     for link in page_soup.find_all('a'):
-        link_hold.append(link.get('href')) #find all links in the page and puts them in an array
+        link_hold.append(link.get('href'))
     
     #remove duplicates
     i = 1
@@ -32,14 +32,58 @@ def getLinksOfMainPage(a):
             
     return link_hold
 
+# returns a list(url of regions) within a list(states)
 def Individual_Links_to_States():
     all_region_links = []
     z = getLinksOfMainPage("https://www.foodpantries.org/")
-    all_links = z[19:70] #this deletes all links in the foodpantries page that was not a link to the individual states
+    all_links = z[19:70] #get rid of non-state links
     for link in all_links:
         driver.get(link)
         all_region_links.append(getLinksOfMainPage(link))
-        time.sleep(2) #sometimes the driver that gets the urls goes to quickly for the webscrape to happen
+        time.sleep(2)
+        
+    i = 0
+    while i < len(all_region_links): #data cleaning
+        all_region_links[i] = all_region_links[i][9:-8]
+        i += 1
     return all_region_links
 
-States_Links = Individual_Links_to_States()
+
+#names of individual food banks taking the link to the region page as its argument
+def Get_Individual_Food_Banks(linktoStatePage):
+    sauce = uReq(linktoStatePage)
+    page_soup = soup(sauce,"lxml")
+    FoodBankName = []
+    temp2 = []
+    combinedtemp = []
+    
+    for FoodBank in page_soup.find_all('h2'):
+        FoodBankName.append(FoodBank.text)
+    
+    for items in page_soup.find_all('p'):
+        temp2.append(items.text)
+    
+    i1 = 0
+    i2 = 1
+    while i1 < len(FoodBankName):
+        combinedtemp.append(FoodBankName[i1]+ temp2[i2]+ temp2[i2+1])
+        i1 += 1
+        i2 += 2
+    return combinedtemp
+
+#Creates Dataset
+def RunAll():
+    States_List = Individual_Links_to_States()
+    i1 = 0
+    i2 = 0
+    data = []
+    while i1 < len(States_List):
+        data.append("new state")
+        while i2 < len(States_List[i1]):
+            data.append(Get_Individual_Food_Banks(States_List[i1][i2]))
+            i2 += 1
+        i1 += 1
+    return data
+
+#Run to Test
+DataSet = RunAll(0)
