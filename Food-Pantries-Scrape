@@ -1,9 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul  8 21:06:19 2020
+
+@author: danielgilhuly
+"""
 #packages -- beautiful soup for the text/ selenium to navigate the page
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen as uReq
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+import pandas as pd
 driver= webdriver.Chrome(ChromeDriverManager().install())
 
 #Getting Links of the main foodpantries page
@@ -76,14 +84,19 @@ def RunAll():
     States_List = Individual_Links_to_States()
     i1 = 0
     i2 = 0
-    data = []
-    while i1 < len(States_List):
-        data.append("new state")
-        while i2 < len(States_List[i1]):
+    z1 = 0 #iterator of dataframe
+    data = pd.DataFrame(columns = ["States", "City", "Zip-Code", "Food Bank Name", "Phone Number", "Descriptions"])
+    while i1 < len(States_List): #i1 keeps track of the states
+        data.loc[z1, "States"] = States_List[i1]
+        while i2 < len(States_List[i1]): #i2 keeps track of the regions
             data.append(Get_Individual_Food_Banks(States_List[i1][i2]))
             i2 += 1
         i1 += 1
     return data
 
 #Run to Test
-DataSet = RunAll(0)
+DataSet = RunAll()
+
+#To implement
+#pandas dataset with iterator
+#regex expressions
