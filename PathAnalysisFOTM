@@ -1,0 +1,275 @@
+setwd("~/Downloads")
+
+data= read.csv("P:/QAC/qac380/Data and Codebooks 2020/FOTM/Data/FOTM_shopper_survey.csv")
+data= read.csv("~/Downloads/FOTM_shopper_survey.csv")
+library(descr)
+library(dplyr)
+library(lavaan)
+library(DiagrammeR)
+library(semPlot)
+
+# subset data to only include FOTM customers
+
+data %>%
+  filter(CONDITION=='FOTM') -> mydata
+
+
+colnames(mydata) <- tolower(colnames(mydata))
+
+mydata <- mydata %>% mutate(agegroup = case_when(age >= 65 ~ 4,
+                                                 age >= 55  & age <= 64 ~ 3,
+                                                 age >= 45  & age <= 54 ~ 2,
+                                                 age >= 18  & age <= 44 ~ 1))
+freq(mydata$agegroup, plot=T, main = "Age")
+
+mydata$prlang[mydata$prlang=='REF']<-NA
+freq(mydata$prlang, main = "Primary Language")
+
+#School level, 0 = less than hs, 1 = HS degree or equivalent, 2 = some college but no degree 3 = higher education or other
+
+mydata$school_level[mydata$school_level == 0] <- 0
+mydata$school_level[mydata$school_level == 1] <- 1
+mydata$school_level[mydata$school_level == 2] <- 2
+mydata$school_level[mydata$school_level == 3] <- 3
+mydata$school_level[mydata$school_level == 4] <- 3
+mydata$school_level[mydata$school_level == 5] <- 3
+mydata$school_level[mydata$school_level == 6] <- 3
+
+freq(mydata$school_level, plot=T, main = "School level")
+
+
+mydata$Months_receive_SNAP<- 0
+mydata$Months_receive_SNAP[mydata$months_snap_des==12]<- 1
+mydata$Months_receive_SNAP[mydata$months_snap_des< 12]<- 2
+mydata$Months_receive_SNAP <-as.factor(mydata$Months_receive_SNAP)
+freq(mydata$Months_receive_SNAP, plot=T, main = "Months receiving SNAP")
+
+#OftenShopFOTM 0 = AT LEAST ONCE WEEK, 1= EVERY OTHER WEEK, 2 = ONCE A MONTH, 3 = NOT A FREQUENT SHOPPER (EVERY OTHER MONTH/2-3 TIMES PER YEAR)
+mydata$OftenShopFOTM[mydata$oftenshopfotm=="NA"]<-NA
+mydata$OftenShopFOTM[mydata$oftenshopfotm== 0] <- 0
+mydata$OftenShopFOTM[mydata$oftenshopfotm== 1] <- 1
+mydata$OftenShopFOTM[mydata$oftenshopfotm== 2] <- 2
+mydata$OftenShopFOTM[mydata$oftenshopfotm== 3] <- 3
+mydata$OftenShopFOTM[mydata$oftenshopfotm== 4] <- 3
+freq(mydata$OftenShopFOTM, plot=T, main = "How often shopping FOTM")
+
+freq(mydata$food_didnt_last, plot=F)
+mydata$FI1[mydata$food_didnt_last==0]<-0
+mydata$FI1[mydata$food_didnt_last>0]<-1
+freq(mydata$FI1, plot=F)
+
+freq(mydata$balanced_meals, plot=F)
+mydata$FI2[mydata$balanced_meals==0]<-0
+mydata$FI2[mydata$balanced_meals>0]<-1
+freq(mydata$FI2, plot=F)
+
+freq(mydata$skip_meals, plot=F)
+mydata$FI3[mydata$skip_meals==0]<-0
+mydata$FI3[mydata$skip_meals==1]<-1
+freq(mydata$FI3, plot=F)
+
+freq(mydata$often_skip_meals, plot=F)
+mydata$FI4[mydata$FI3==0]<-0
+mydata$FI4[mydata$often_skip_meals==0]<-1
+mydata$FI4[mydata$often_skip_meals==1]<-1
+mydata$FI4[mydata$often_skip_meals==2]<-0
+freq(mydata$FI4, plot=F)
+
+mydata$FI5[mydata$FI1==0 & mydata$FI2==0 & mydata$FI3==0]<-0
+mydata$FI5[mydata$eat_less==0]<-0
+mydata$FI5[mydata$eat_less==1]<-1
+freq(mydata$FI5, plot=F)
+
+freq(mydata$hungry, plot=F)
+mydata$FI6[mydata$FI1==0 & mydata$FI2==0 & mydata$FI3==0]<-0
+mydata$FI6[mydata$hungry==0]<-0
+mydata$FI6[mydata$hungry==1]<-1
+freq(mydata$FI6, plot=F)
+
+mydata$insecurity_sum<-mydata$FI1+mydata$FI2+mydata$FI3+mydata$FI4+mydata$FI5+mydata$FI6
+freq(mydata$insecurity_sum, plot = F)
+
+mydata$food_security[mydata$insecurity_sum==0|mydata$insecurity_sum==1]<-"High food security"
+mydata$food_security[mydata$insecurity_sum>=2 & mydata$insecurity_sum<=4]<-"Low food security"
+mydata$food_security[mydata$insecurity_sum > 4]<-"Very low food security"
+freq(mydata$food_security, plot=F)
+mydata$food_security<-as.numeric(mydata$food_security)
+freq(mydata$food_security, plot=T, main = "Food Security")
+
+
+freq(mydata$eatmore_fotm, plot = T, main = "Eat more or less FV")
+
+
+freq(mydata$fotmhealth, plot = T, main ="Has health improved")
+
+
+freq(mydata$health12month, plot = T, main ="Healthier or Less Healthier than 12 months ago")
+
+freq(mydata$fvweight, plot = T, main ="Weight changed as result of FV from FOTM")
+
+myvars <- c("prlang", "school_level", "agegroup", "Months_receive_SNAP", "OftenShopFOTM", "eatmore_fotm", "health12month", "fvweight", "food_security" )
+df <- mydata[myvars]
+
+str(df$prlang)
+str(df$school_level)
+str(df$agegroup)
+str(df$Months_receive_SNAP)
+str(df$OftenShopFOTM)
+str(df$eatmore_fotm)
+str(df$health12month)
+str(df$fvweight)
+
+# create dummy coded variables for categorical variables
+library(psych)
+
+# age
+dum_age<-as.data.frame(dummy.code(df$agegroup))
+# drop variable which is going to be the reference group (in this case we will use age 65+ as the reference group, 
+# which will allow us to compare all other groups to the age 65+ group)
+dum_age2<-dum_age[-4]
+# rename dummy coded variables
+colnames(dum_age2) <- paste0("age",colnames(dum_age2))
+
+#education
+dum_edu<-as.data.frame(dummy.code(df$school_level))
+# drop variable which is going to be the reference group (in this case we will use less than high school as the reference group, 
+# which will allow us to compare all other groups to the less than high school group)
+dum_edu2<-dum_edu[-1]
+# rename dummy coded variables
+colnames(dum_edu2) <- paste0("edu",colnames(dum_edu2))
+
+# dummy prlang
+dummy_prlang<-as.data.frame(dummy.code(df$prlang))
+dummy_prlang2 <- dummy_prlang[-1] # drop variable which is going to be the reference group (in this case we will use Spanish as the reference group)
+colnames(dummy_prlang2) = paste0("prlang", colnames(dummy_prlang2))
+         
+#dummy_SNAP
+dummy_SNAP = as.data.frame(dummy.code(df$Months_receive_SNAP))
+dummy_SNAP2 = dummy_SNAP[-1] #recode so reference group is receiving SNAP for 12 months
+colnames(dummy_SNAP2) = paste0("SNAP", colnames(dummy_SNAP2))
+
+#dummy_OftenShopFOTM
+dummy_OftenShop = as.data.frame(dummy.code(df$OftenShopFOTM))
+dummy_OftenShop2 =dummy_OftenShop[-2] #recode so reference group is oftenshopFOTM = Once a month
+colnames(dummy_OftenShop2) = paste0("OftenShopFOTM", colnames(dummy_OftenShop2))
+                                        
+#dummy_foodinsecurity
+dummy_food_insecurity = as.data.frame(dummy.code(df$food_security))
+dummy_food_insecurity2 =dummy_food_insecurity[-2] 
+colnames(dummy_food_insecurity2) = paste0("Food_Insecurity",colnames(dummy_food_insecurity2))
+                                                                                  
+#eatmore_fotm
+dum_eatmore<-as.data.frame(dummy.code(df$eatmore_fotm))
+# drop variable which is going to be the reference group (in this case we will use eat more FV than before as the reference group, 
+# which will allow us to compare all other groups to the eat more FV than before group)
+dum_eatmore2<-dum_eatmore[-2]
+# rename dummy coded variables
+colnames(dum_eatmore2) <- paste0("eatmore_fotm",colnames(dum_eatmore2))
+
+# health12month
+dum_health12month<-as.data.frame(dummy.code(df$health12month))
+# drop variable which is going to be the reference group (in this case we will use “no” as the reference group, 
+# which will allow us to compare all other groups to the “no” group)
+dum_health12month2<-dum_health12month[-1]
+# rename dummy coded variables
+colnames(dum_health12month2) <- paste0("health12month",colnames(dum_health12month2))
+
+# dummy fvweight
+dummy_fvweight<-as.data.frame(dummy.code(df$fvweight))
+dummy_fvweight2 <- dummy_fvweight[-1] # drop variable which is going to be the reference group (in this case we will use Spanish as the reference group)
+colnames(dummy_fvweight2) = paste0("fvweight", colnames(dummy_fvweight2))
+         
+         
+# when done dummy coding, you can add the dummy variables to your original data set
+
+df2<-cbind(df,dum_age2,dum_edu2, dummy_prlang2, dummy_SNAP2, dummy_OftenShop2, dummy_food_insecurity2, dum_eatmore2, dum_health12month2, dummy_fvweight2)
+names(df2)
+
+#-------------------------------------------------------------------------------
+#Path Analysis 
+
+# define model (enclose model definition in single quotes)
+
+model <- ' # direct effects to outcome
+
+             eatmore_fotm0 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+
+             eatmore_fotm2 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+
+             health12month0 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+
+             health12month1 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+
+             fvweight0 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+
+             fvweight1 ~ edu1+edu2+edu3+age4+age2+age3+SNAP0+SNAP2+OftenShopFOTM1+OftenShopFOTM2+OftenShopFOTM3+
+             Food_Insecurity1+Food_Insecurity2
+        
+          # set covariances between dummy response variables to 0 (because they are orthogonal) 
+          # but estimate covariance between different respose variables)
+            
+            eatmore_fotm0~~0*eatmore_fotm2
+            health12month0~~0*health12month1
+            fvweight0~~0*fvweight1
+
+'
+# use weighted least squares estimator for binary response variables
+path <- sem(model, data = df2, estimator="MLR")
+summary(path, standardized=T)
+
+
+#extract parameter estimates to get odds ratios and 95% CI
+path_output<-as.data.frame(parameterestimates(path))
+
+# write CSV file to make a nice table in Excel
+write.csv(path_output, "path analysis output.csv")
+
+# get r-square values for endogeneous (dependent) variables
+inspect(path, 'r2')
+
+
+
+
+
+
+# graph 1
+
+df$education <- as.character(df$school_level)
+
+df$education_level <- factor(df$education,
+                              levels = c('0','1','2','3'),
+                              labels = c('Less than HS','HS degree or equivalent','Some college but no college degree','Higher education or other'))
+
+ggplot(data=df) +
+  geom_bar(aes(x=food_security, y=..count../sum(..count..)*100, fill=education_level),color='black',position='dodge')+
+  scale_x_discrete(limits = c("High",'Low', 'Very Low'))+
+  scale_fill_manual('Education Level',values=c("turquoise1","green","blue","purple"))+
+  xlab('Food Security')+
+  ylab('Percentage')+
+  ggtitle('Food Security of FOTM Customers')
+
+# graph 2
+
+df$age <- as.character(df$agegroup)
+df$weight <- as.character(df$fvweight)
+
+df<-df[!is.na(df$weight),]
+
+df$age <- factor(df$age,
+                 levels = c('1','2','3','4'),
+                 labels = c('18-44','45-54','55-64','65 or older'))
+
+df$weight <- factor(df$weight,
+                 levels = c('0','1','2'),
+                 labels = c('Not likely','Somewhat likely','Very Likely'))
+ggplot(data=df) +
+  geom_bar(aes(x=weight, y=..count../sum(..count..)*100, fill=age),color='black',position='dodge')+
+  xlab('Weight Change')+
+  ylab('Percentage')+
+  scale_fill_manual('Age',values=c("red4","chocolate1","gold1","sandybrown"))+
+  ggtitle('Weight Change of FOTM Customers')
