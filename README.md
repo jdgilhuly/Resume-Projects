@@ -11,5 +11,6 @@ Art as an asset class is relatively unexplored in Investment literature, perhaps
 FOTM is a a non-profit focusing on combating hunger for lower socio-economic areas. The goal of the path analysis to utilize data collected by FOTM to predict most at-risk demographic areas of food insecurity.
 
 ## Age and Gender CNN classifier 
-### Motivation: CNN classifier utilized to understand different demographics sentiment towards the 2020 Election and Electoral College
+### Motivation: 
+CNN classifier utilized to understand different demographics sentiment towards the 2020 Election and Electoral College
 
