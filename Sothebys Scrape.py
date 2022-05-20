@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import re
 import time
-
+from selenium.webdriver.common.by import By
 
 #%% Cleanup and click functions
 
@@ -98,8 +98,8 @@ def scroll():
 #%% Get to Auctions and Deal with Search Box for Eras
 def find_auctions_Search():
     scroll()
-    driver.find_elements_by_xpath("""/html/body/main/div/div/div[2]/dialog/div[1]/div/form/div[2]/div[2]/div[3]/div[2]/span""")
-    Eras_Class= driver.find_elements_by_class_name("SearchControlCheckbox")
+    driver.find_elements(By.XPATH,"""/html/body/main/div/div/div[2]/dialog/div[1]/div/form/div[2]/div[2]/div[3]/div[2]/span""") #xpath will be deprecated soon
+    Eras_Class= driver.find_elements(By.CLASS_NAME, "SearchControlCheckbox")
     Era_and_Link = cleanup_auctions_eras(Eras_Class)
     return Era_and_Link
 
@@ -107,11 +107,11 @@ def find_auctions_Search():
 #%% Names of Auctions, Date of Auctions
 
 def Auctions_scrape():
-    Auction_titles= driver.find_elements_by_class_name("Card-title")
-    Date_and_Location  = driver.find_elements_by_class_name("Card-details")
+    Auction_titles= driver.find_elements(By.CLASS_NAME,"Card-title")
+    Date_and_Location  = driver.find_elements(By.CLASS_NAME,"Card-details")
     Auctions = Cleanup_Auction_Search(Auction_titles)
     Date_Locations = Cleanup_Auction_Search(Date_and_Location)
-    LinktoAuctions= driver.find_elements_by_class_name("AuctionActionLink-link")
+    LinktoAuctions= driver.find_elements(By.CLASS_NAME,"AuctionActionLink-link")
     z= np.column_stack([Auctions, Date_Locations, LinktoAuctions])
     try:
         if z[0][0] == "Original Racing Posters, 1925–1972" or "Manga": #these ones were being difficult
@@ -128,7 +128,7 @@ def Auctions_scrape():
 
 def AAAP_scrape():
     Individual_Data = []
-    AAAP = driver.find_elements_by_class_name("css-1ilyui9")
+    AAAP = driver.find_elements(By.CLASS_NAME,"css-1ilyui9")
     for x in AAAP:
         a = Pattern_Match(x.text, "\n")
         b = Clean_Individual_Cards(a)
@@ -188,11 +188,14 @@ data = create_data2(0, 0, 0, 0)
 
 
 #%% Finish
-#zzz = data.to_excel("Daniel's Sotheby's Auction Results1")
-#driver.close()
+zzz = data.to_excel("Daniel's Sotheby's Auction Results1")
+driver.close()
 
 
 
 
 
         
+
+
+# %%
